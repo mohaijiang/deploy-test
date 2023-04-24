@@ -1,22 +1,27 @@
 <script setup>
 // import {useSuiWallet} from "../dist/vue-sui-wallet.es";
 import {useSuiWallet} from "../lib/lib";
+import {
+  TransactionBlock,
+} from '@mysten/sui.js';
 
 const {suiWallet, suiAddress, suiProvider} = useSuiWallet();
 
 const testWallet = () => {
 
-  suiWallet.signAndExecuteTransaction({
-      data:{
-        packageObjectId: '0x0000000000000000000000000000000000000002',
-        module: 'devnet_nft',
-        function: 'mint',
-        typeArguments: [],
-        arguments: ["Example NFT","An NFT created by Sui Wallet",
-          "ipfs://QmZPWWy5Si54R3d26toaqRiqvCH7HkGdXkxwUgCm2oKKM2?filename=img-sq-01.png"],
-        gasBudget: 5000
-      }}
-    ).then(res=>{
+  const tx = new TransactionBlock();
+  tx.moveCall({
+    target: "0x0000000000000000000000000000000000000002::devnet_nft::mint",
+    arguments: [
+      tx.pure("some hamster "),
+      tx.pure("some hamster description"),
+      tx.pure(
+          "https://develop.hamster.newtouch.com/static/logo-dark.6da8722b.svg"
+      ),
+    ],
+  });
+
+  suiWallet.signAndExecuteTransactionBlock(tx).then(res=>{
       alert('Transaction completed successfully. <br>' +res.certificate.transactionDigest+ '')
       console.log(res);
     }).catch(e=>{
