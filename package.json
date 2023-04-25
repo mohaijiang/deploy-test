@@ -13,7 +13,11 @@
     "type": "git",
     "url": "https://github.com/manolisliolios/vue-sui-wallet.git"
   },
-  "files": ["dist", "lib", "LICENSE"],
+  "files": [
+    "dist",
+    "lib",
+    "LICENSE"
+  ],
   "main": "./dist/vue-sui-wallet.umd.js",
   "module": "./dist/vue-sui-wallet.es.js",
   "exports": {
@@ -29,6 +33,8 @@
     "deploy": "vite build && npm publish"
   },
   "dependencies": {
+    "@mysten/sui.js": "^0.32.1",
+    "ethers": "^5.7.2",
     "vue": "^3.2.45"
   },
   "devDependencies": {
