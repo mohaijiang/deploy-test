@@ -41,8 +41,8 @@
     <div>
       <label>wallet account</label>
       <div>
-        <li :key="wallet" v-for="{wallet,address} in accounts">
-          {{wallet}}--{{ address}}-- <button @click="logout(wallet,address)" class="sui-logout-btn"> {{ logoutText }}</button>
+        <li :key="item" v-for="item in suiWallet.accountMap">
+          {{item[0]}}--{{ item[1]}}-- <button @click="logout(item[0],item[1])" class="sui-logout-btn"> {{ logoutText }}</button>
         </li>
       </div>
     </div>
