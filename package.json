@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@mysten/sui.js": "^0.32.1",
+    "@vue/reactivity": "^3.2.47",
     "ethers": "^5.7.2",
     "vue": "^3.2.45"
   },

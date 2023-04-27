@@ -38,11 +38,13 @@
       </p>
     </div>
 
+    {{suiWallet.accounts}}
+
     <div>
       <label>wallet account</label>
       <div>
-        <li :key="item" v-for="item in suiWallet.accountMap">
-          {{item[0]}}--{{ item[1]}}-- <button @click="logout(item[0],item[1])" class="sui-logout-btn"> {{ logoutText }}</button>
+        <li :key="item" v-for="item in suiWallet.accounts">
+          {{item.wallet}}--{{ item.address }}-- <button @click="logout(item.wallet,item.address)" class="sui-logout-btn"> {{ logoutText }}</button>
         </li>
       </div>
     </div>
@@ -59,6 +61,7 @@
 <script setup>
 
 import {computed, ref,watch} from "vue";
+import { toRaw } from '@vue/reactivity'
 import SuiConnectModal from "./SuiConnectModal.vue";
 import {useSuiWallet} from "../composables/useSuiWallet";
 
@@ -115,23 +118,12 @@ const props = defineProps({
 })
 
 const toggleWalletAuthModal = ref(props.startToggled);
-const {suiWallet, suiAddress, suiProvider,changeNetwork,accountMap} = useSuiWallet();
+const {suiWallet, suiAddress, suiProvider,changeNetwork} = useSuiWallet();
 
 const currentNetwork = ref('eth:mainnet')
 
 watch(currentNetwork,(newVal,oldVal) =>{
   changeNetwork(newVal)
-})
-
-const accounts = computed(() => {
-  const list = []
-  for(let item of suiWallet.accountMap){
-    list.push({
-      wallet: item[0],
-      address: item[1]
-    })
-  }
-  return list
 })
 
 
@@ -142,12 +134,12 @@ const hasWalletPermissions = computed(()=>{
 const logout = (wallet, account) => {
   suiAddress.value = null;
 
-  const provider = suiWallet.providerMap.get(wallet)
+  const provider = toRaw(suiWallet.providerMap.get(wallet))
 
   suiWallet.logout(provider).then(()=>{
     suiWallet.activeProvider = null; // clear activeProvider too.
   }).catch().finally(() => {
-    console.log(suiWallet.accountMap)
+    console.log(suiWallet.accounts)
   }); // logout.
 }
 
@@ -167,6 +159,8 @@ const verifyLoggedInStatus = () => {
 
   }).catch(e => {
     logout(); // logout if we fail the re-connect phase.
+  }).finally(()=>{
+    console.log(suiWallet.accounts)
   })
 }
 

@@ -144,7 +144,6 @@ const requestWalletAccess = (provider)=>{
     wallet.suiWallet.activeProvider = res.provider;
     wallet.suiProvider.value = res.provider.name;
     wallet.suiAddress.value = res.account;
-    wallet.suiWallet.accountMap.set( res.provider.name,  res.account)
     emit('closeModal');
   }).catch(e=>{
     console.log('error:' +e);
