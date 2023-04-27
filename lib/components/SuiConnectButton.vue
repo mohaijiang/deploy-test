@@ -38,12 +38,12 @@
       </p>
     </div>
 
-    {{suiWallet.accounts}}
+    {{accounts}}
 
     <div>
       <label>wallet account</label>
       <div>
-        <li :key="item" v-for="item in suiWallet.accounts">
+        <li :key="item" v-for="item in accounts">
           {{item.wallet}}--{{ item.address }}-- <button @click="logout(item.wallet,item.address)" class="sui-logout-btn"> {{ logoutText }}</button>
         </li>
       </div>
@@ -60,7 +60,7 @@
 </template>
 <script setup>
 
-import {computed, ref,watch} from "vue";
+import {computed, ref,watch,onMounted} from "vue";
 import { toRaw } from '@vue/reactivity'
 import SuiConnectModal from "./SuiConnectModal.vue";
 import {useSuiWallet} from "../composables/useSuiWallet";
@@ -119,28 +119,33 @@ const props = defineProps({
 
 const toggleWalletAuthModal = ref(props.startToggled);
 const {suiWallet, suiAddress, suiProvider,changeNetwork} = useSuiWallet();
+const accounts = ref([])
 
 const currentNetwork = ref('eth:mainnet')
 
 watch(currentNetwork,(newVal,oldVal) =>{
   changeNetwork(newVal)
 })
-
+onMounted(()=>{
+  accounts.value = suiWallet.accounts
+})
 
 const hasWalletPermissions = computed(()=>{
   return !!suiAddress.value
 });
 
-const logout = (wallet, account) => {
+const logout = async(wallet, account) => {
   suiAddress.value = null;
 
   const provider = toRaw(suiWallet.providerMap.get(wallet))
 
-  suiWallet.logout(provider).then(()=>{
+  await suiWallet.logout(provider).then((res)=>{
+    accounts.value = res
     suiWallet.activeProvider = null; // clear activeProvider too.
   }).catch().finally(() => {
     console.log(suiWallet.accounts)
   }); // logout.
+  console.log('11111',accounts.value)
 }
 
 // This one verifies that the logged in state is actually valid by
