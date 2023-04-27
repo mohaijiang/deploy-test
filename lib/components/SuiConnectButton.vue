@@ -2,24 +2,51 @@
 
   <div class="sui-login-wrapper">
 
-    <div v-if="showInformationText" v-show="hasWalletPermissions" class="sui-account-details">
-        <p class="wallet-text">
-          {{connectedWalletText}}: {{suiProvider}}
-        </p>
-        <p class="address-text">
-          {{addressText}}: {{suiAddress}}
-        </p>
+    <div>
+      <label>network:</label>
+      <select v-model="currentNetwork">
+        <optgroup label="Ethereum">
+          <option value="eth:1">Mainnet</option>
+          <option value="eth:6688">IRISHub</option>
+        </optgroup>
+        <optgroup label="Sui">
+          <option value="sui:mainnet">Mainnet</option>
+        </optgroup>
+
+      </select>
     </div>
 
-    <button v-if="!hasWalletPermissions"
-            class="sui-login-button"
-            @click="toggleWalletAuthModal = true">
-      {{ connectText }}
-    </button>
+    <div>
+      <button
+              class="sui-login-button"
+              @click="toggleWalletAuthModal = true">
+        {{ connectText }}
+      </button>
 
-    <button v-else class="sui-logout-btn" @click="logout">
-      {{ logoutText }}
-    </button>
+      <button class="sui-logout-btn" @click="logout">
+        {{ logoutText }}
+      </button>
+    </div>
+
+
+    <div v-if="showInformationText" v-show="hasWalletPermissions" class="sui-account-details">
+      <p class="wallet-text">
+        {{connectedWalletText}}: {{suiProvider}}
+      </p>
+      <p class="address-text">
+        {{addressText}}: {{suiAddress}}
+      </p>
+    </div>
+
+    <div>
+      <label>wallet account</label>
+      <div>
+        <li :key="wallet" v-for="{wallet,address} in accounts">
+          {{wallet}}--{{ address}}-- <button @click="logout(wallet,address)" class="sui-logout-btn"> {{ logoutText }}</button>
+        </li>
+      </div>
+    </div>
+
 
     <sui-connect-modal v-show="toggleWalletAuthModal"
                        :connect="connect"
@@ -31,7 +58,7 @@
 </template>
 <script setup>
 
-import {computed, ref} from "vue";
+import {computed, ref,watch} from "vue";
 import SuiConnectModal from "./SuiConnectModal.vue";
 import {useSuiWallet} from "../composables/useSuiWallet";
 
@@ -88,18 +115,40 @@ const props = defineProps({
 })
 
 const toggleWalletAuthModal = ref(props.startToggled);
-const {suiWallet, suiAddress, suiProvider} = useSuiWallet();
+const {suiWallet, suiAddress, suiProvider,changeNetwork,accountMap} = useSuiWallet();
+
+const currentNetwork = ref('eth:mainnet')
+
+watch(currentNetwork,(newVal,oldVal) =>{
+  changeNetwork(newVal)
+})
+
+const accounts = computed(() => {
+  const list = []
+  for(let item of suiWallet.accountMap){
+    list.push({
+      wallet: item[0],
+      address: item[1]
+    })
+  }
+  return list
+})
+
 
 const hasWalletPermissions = computed(()=>{
   return !!suiAddress.value
 });
 
-const logout = () => {
+const logout = (wallet, account) => {
   suiAddress.value = null;
 
-  suiWallet.logout().then(()=>{
+  const provider = suiWallet.providerMap.get(wallet)
+
+  suiWallet.logout(provider).then(()=>{
     suiWallet.activeProvider = null; // clear activeProvider too.
-  }).catch(); // logout.
+  }).catch().finally(() => {
+    console.log(suiWallet.accountMap)
+  }); // logout.
 }
 
 // This one verifies that the logged in state is actually valid by
@@ -115,6 +164,7 @@ const verifyLoggedInStatus = () => {
   suiWallet.login().then(res=>{
     if(res.error) return logout();
     suiAddress.value = res.account;
+
   }).catch(e => {
     logout(); // logout if we fail the re-connect phase.
   })
@@ -126,59 +176,4 @@ verifyLoggedInStatus();
 </script>
 
 <style scoped>
-.sui-account-details{
-  margin-right:1rem;
-  margin-bottom:1rem;
-}
-
-.sui-login-wrapper{
-  display:block;
-  text-align: center;
-}
-
-@media screen and (min-width: 767px) {
-  .sui-account-details{
-    margin-bottom:0;
-  }
-  .sui-login-wrapper{
-    display:flex;
-    text-align:left;
-  }
-}
-.sui-login-wrapper > *{
-  flex-shrink: 0;
-}
-.sui-logout-btn{
-  flex-shrink: 0;
-  padding: 0.5rem 0.75rem;
-  background-color: transparent;
-  color: #111827;
-  cursor:pointer;
-  border:1px solid #111827;
-  border-radius: 9999px;
-  min-width:160px;
-}
-.wallet-text{
-  font-size:0.8rem;
-  margin:0;
-}
-.address-text{
-  margin:0;
-  font-size: 0.6rem;
-}
-.sui-login-button{
-  flex-shrink: 0;
-  background: #1f2937;
-  display: flex;
-  cursor:pointer;
-  box-shadow:none!important;
-  align-items: center;
-  text-align: center;
-  /*margin:0 auto;*/
-  justify-content: center;
-  color:white;
-  padding: 7px 12px;
-  border-radius:99px;
-  min-width:160px;
-}
 </style>
